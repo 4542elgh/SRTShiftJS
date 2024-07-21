@@ -1,5 +1,6 @@
 let timestamps = "";
 let filename = "";
+
 const loadFileAsText = () => {
 	const srtFile = document.getElementById("uploadFile").files[0];
 	filename = srtFile.name;
@@ -74,6 +75,7 @@ const parseToObj = (inputString) => {
 		}
 	}
 
+	// Determine which lines are new lines, taken multiline subtitle into account
 	const newLines = arr
 		.map((line, i) => (line === "" ? i : -1))
 		.filter((index) => index !== -1);
@@ -116,8 +118,6 @@ const parseTimeToMs = (time) => {
 	return ms;
 };
 
-// 217217
-// 00:03:37,217
 const parseTimeToHHMMSS = (time) => {
 	if (time <= 0) {
 		return "00:00:00,000";
@@ -126,11 +126,12 @@ const parseTimeToHHMMSS = (time) => {
 	let HHMMSS = "";
 	// ms to hr
 	HHMMSS += String(Math.floor(time / (60 * 60 * 1000))).padStart(2, "0") + ":";
-
 	time = time % (60 * 60 * 1000);
+
 	// ms to min
 	HHMMSS += String(Math.floor(time / (60 * 1000))).padStart(2, "0") + ":";
 	time = time % (60 * 1000);
+
 	// ms to sec
 	HHMMSS += String(Math.floor(time / 1000)).padStart(2, "0") + ",";
 	time = time % 1000;
@@ -144,6 +145,7 @@ const parseTimeToHHMMSS = (time) => {
 	return HHMMSS;
 };
 
+// Until Next Timestamp - this is time duration of current subtitle disappear and next subtitle appear
 const getRelativeTime = (timestamps) => {
 	for (let i = 0; i < timestamps.length - 1; i++) {
 		timestamps[i].timeRelativeToNext =
@@ -164,14 +166,12 @@ $(document).on("input", ".timeChange", function (event) {
 	timeout = setTimeout(function () {
 		const sequenceModified = parseInt($($($(tr).children()).get(0)).text());
 
+		// taken user modified value (determine if start or end is modified and calculate accordingly)
 		for (let i = 0; i < timestamps.length; i++) {
 			const item = timestamps[i];
 			if (item.sequence === sequenceModified) {
 				let newTimeStart = "";
 				let newTimeEnd = "";
-
-				console.log(startOrEnd);
-				console.log(startOrEnd == "start");
 
 				if (startOrEnd === "start") {
 					newTimeStart = $($($(tr).children()).get(3))
@@ -197,7 +197,9 @@ $(document).on("input", ".timeChange", function (event) {
 				break;
 			}
 		}
+
 		updateSubtitle(sequenceModified);
+
 		$("#alert").text(
 			"Timestamps recalculated " +
 				new Date()
@@ -211,6 +213,7 @@ $(document).on("input", ".timeChange", function (event) {
 	}, 5000);
 });
 
+// Modify all other timestamps based on Duration and Relative to next subtitle constants
 const updateSubtitle = (sequence) => {
 	for (let i = sequence + 1; i < timestamps.length; i++) {
 		const prevTimestamp = timestamps[i - 1];

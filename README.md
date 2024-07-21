@@ -12,7 +12,7 @@ This project is a frontend only app that manipulate SRT file with new defined ti
     1. This process will calculate constants like duration and until next timestamp.
 3. Manipulate a human readable timestamp column
 4. There is a 5 second timeout before recalculating all other fields (just in case you type slow)
-5. Save the newly calculated SRT
+5. Save the newly calculated SRT file
 
 # Calculations
 
