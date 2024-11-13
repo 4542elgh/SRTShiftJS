@@ -35,15 +35,15 @@ const saveTextAsFile = () => {
 	document.body.appendChild(downloadLink);
 	downloadLink.click();
 	document.body.removeChild(downloadLink);
-	$("#alert").text(
-		"SRT Saved " +
-			new Date()
-				.toLocaleString("en-CA", {
-					timeZone: "America/Los_Angeles",
-					hour12: false,
-				})
-				.replace(",", ""),
-	);
+	// $("#alert").text(
+	// 	"SRT Saved " +
+	// 		new Date()
+	// 			.toLocaleString("en-CA", {
+	// 				timeZone: "America/Los_Angeles",
+	// 				hour12: false,
+	// 			})
+	// 			.replace(",", ""),
+	// );
 };
 
 const generateTable = (timestamps) => {
@@ -54,7 +54,8 @@ const generateTable = (timestamps) => {
                 <td>${item.timeStartMs}</td>
                 <td>${item.timeEndMs}</td>
                 <td contenteditable='true' class="timeChange" data-startOrEnd="start">${item.timeStart}</td>
-                <td contenteditable='true' class="timeChange" data-startOrEnd="end">${item.timeEnd}</td>
+                <!-- <td contenteditable='true' class="timeChange" data-startOrEnd="end">${item.timeEnd}</td> -->
+                <td>${item.timeEnd}</td>
                 <td>${item.timeDuration}</td>
                 <td>${item.timeRelativeToNext}</td>
                 <td>${item.text.replaceAll("\n", "\\n")}</td>
@@ -173,22 +174,14 @@ $(document).on("input", ".timeChange", function (event) {
 				let newTimeStart = "";
 				let newTimeEnd = "";
 
-				if (startOrEnd === "start") {
-					newTimeStart = $($($(tr).children()).get(3))
-						.text()
-						.trim();
-					newTimeStartMs = parseTimeToMs(newTimeStart);
-					newTimeEndMs = newTimeStartMs + item.timeDuration;
-					newTimeEnd = parseTimeToHHMMSS(newTimeEndMs);
-				} else {
-					newTimeEnd = $($($(tr).children()).get(4))
-						.text()
-						.trim();
-					newTimeEndMs = parseTimeToMs(newTimeEnd);
-					newTimeStartMs = newTimeEndMs - item.timeDuration;
-					newTimeStart = parseTimeToHHMMSS(newTimeStartMs);
-				}
+				newTimeStart = $($($(tr).children()).get(3))
+					.text()
+					.trim();
+				newTimeStartMs = parseTimeToMs(newTimeStart);
+				newTimeEndMs = newTimeStartMs + item.timeDuration;
+				newTimeEnd = parseTimeToHHMMSS(newTimeEndMs);
 
+				// Calculating new values (this is correct and accurate)
 				item.timeStart = newTimeStart;
 				item.timeEnd = newTimeEnd;
 				item.timeStartMs = newTimeStartMs;
@@ -197,6 +190,11 @@ $(document).on("input", ".timeChange", function (event) {
 				break;
 			}
 		}
+
+		console.log(timestamps[0].timeStart)
+		console.log(timestamps[0].timeEnd)
+		console.log(timestamps[0].timeStartMs)
+		console.log(timestamps[0].timeEndMs)
 
 		updateSubtitle(sequenceModified);
 
@@ -215,22 +213,21 @@ $(document).on("input", ".timeChange", function (event) {
 
 // Modify all other timestamps based on Duration and Relative to next subtitle constants
 const updateSubtitle = (sequence) => {
-	for (let i = sequence + 1; i < timestamps.length; i++) {
+	for (let i = sequence; i < timestamps.length; i++) {
 		const prevTimestamp = timestamps[i - 1];
 		const currTimestamp = timestamps[i];
-		currTimestamp.timeStartMs =
-			prevTimestamp.timeEndMs + prevTimestamp.timeRelativeToNext;
-		currTimestamp.timeEndMs =
-			currTimestamp.timeStartMs + currTimestamp.timeDuration;
+		currTimestamp.timeStartMs = prevTimestamp.timeEndMs + prevTimestamp.timeRelativeToNext;
+		currTimestamp.timeEndMs = currTimestamp.timeStartMs + currTimestamp.timeDuration;
 		currTimestamp.timeStart = parseTimeToHHMMSS(currTimestamp.timeStartMs);
 		currTimestamp.timeEnd = parseTimeToHHMMSS(currTimestamp.timeEndMs);
 	}
 
 	if (sequence > 0) {
 		for (let i = sequence; i > 0; i--) {
-			console.log(i);
 			const prevTimestamp = timestamps[i - 1];
 			const currTimestamp = timestamps[i];
+			console.log("current timestamp");
+			console.log(currTimestamp);
 			prevTimestamp.timeEndMs =
 				currTimestamp.timeStartMs - prevTimestamp.timeRelativeToNext > 0
 					? currTimestamp.timeStartMs - prevTimestamp.timeRelativeToNext
